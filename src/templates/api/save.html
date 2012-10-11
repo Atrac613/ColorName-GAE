@@ -1,12 +1,20 @@
 <html>
 	<body>
-		<form action="/api/v1/save" method="post">
-			Name: <input type="text" name="name" /><br />
-			NameYomi: <input type="text" name="name_yomi" /><br />
-			Red: <input type="text" name="red" /><br />
-			Green: <input type="text" name="green" /><br />
-			Blue: <input type="text" name="blue" /><br />
-			Rank: <input type="text" name="rank" /><br />
+		<h1>Single</h1>
+		<form action="/api/v1/save_with_single" method="post">
+			Name: <input type="text" name="name" value="name" /><br />
+			NameYomi: <input type="text" name="name_yomi" value="name yomi" /><br />
+			Red: <input type="text" name="red" value="10" /><br />
+			Green: <input type="text" name="green" value="20" /><br />
+			Blue: <input type="text" name="blue" value="30" /><br />
+			Rank: <input type="text" name="rank" value="5" /><br />
+			<input type="submit" value="Send" />
+		</form>
+		<h1>Multiple</h1>
+		<form action="/api/v1/save_with_multiple" method="post">
+			Raw Data: <br /><textarea name="raw_data" rows="10" cols="50">
+{{ json_data }}
+			</textarea><br />
 			<input type="submit" value="Send" />
 		</form>
 	</body>
