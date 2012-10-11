@@ -1,0 +1,13 @@
+<html>
+	<body>
+		hello, {{ user_name }}.
+		
+		<table>
+		{% for color in color_list %}
+			<tr>
+				<td bgcolor="{{ color.hex }}">{{ color.name }}</td>
+			</tr>
+		{% endfor %}
+		</table>
+	</body>
+</html>

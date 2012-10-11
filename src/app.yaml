@@ -16,5 +16,8 @@ handlers:
 - url: /api/.*
   script: api.py
 
-- url: /.*
+- url: /
   script: main.py
+  
+- url: /.*
+  script: user.py
