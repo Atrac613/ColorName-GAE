@@ -16,7 +16,7 @@ from db import ColorName
 class UserPage(webapp.RequestHandler):
     def get(self, user_name):
 
-        color_name_list = ColorName.all().fetch(100, 0)
+        color_name_list = ColorName.all().order('rank').fetch(100, 0)
         
         color_list = []
         for color_name in color_name_list:
