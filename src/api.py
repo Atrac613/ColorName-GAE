@@ -54,6 +54,10 @@ class saveWithMultipleAPI(webapp.RequestHandler):
         if raw_data != '':
             json_data = simplejson.loads(raw_data)
             
+            color_name_list = ColorName().all().fetch(100, 0)
+            for color_name in color_name_list:
+                color_name.delete()
+            
             for data in json_data:
                 name = data['name']
                 name_yomi = data['name_yomi']
