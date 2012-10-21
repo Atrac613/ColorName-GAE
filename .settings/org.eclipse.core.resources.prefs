@@ -1,5 +1,6 @@
 eclipse.preferences.version=1
 encoding//src/api.py=utf-8
+encoding//src/common.py=utf-8
 encoding//src/db.py=utf-8
 encoding//src/main.py=utf-8
 encoding//src/templates/index.html=UTF-8

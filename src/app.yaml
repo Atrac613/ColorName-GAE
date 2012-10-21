@@ -13,6 +13,11 @@ handlers:
 - url: /js
   static_dir: web/js
 
+- url: /api/v1/login
+  login: required
+  secure: always
+  script: api.py
+
 - url: /api/.*
   script: api.py
 
