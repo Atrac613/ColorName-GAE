@@ -12,11 +12,19 @@ from google.appengine.api import users
 from google.appengine.api import mail
 
 from db import ColorName
+from db import UserPrefs
 
 class UserPage(webapp.RequestHandler):
-    def get(self, user_name):
-
-        color_name_list = ColorName.all().order('rank').fetch(100, 0)
+    def get(self, user_id):
+        user_prefs = UserPrefs().all().filter('user_id =', user_id).get()
+        
+        if user_prefs is None:
+            return self.error(404)
+        
+        color_name_list = ColorName.all()\
+                            .filter('user_prefs =', user_prefs)\
+                            .order('rank')\
+                            .fetch(100, 0)
         
         color_list = []
         for color_name in color_name_list:
@@ -28,14 +36,13 @@ class UserPage(webapp.RequestHandler):
                                })
         
         template_values = {
-            'user_name': user_name,
+            'user_name': user_id,
             'color_list': color_list
             
         }
         
         path = os.path.join(os.path.dirname(__file__), 'templates/user.html')
         self.response.out.write(template.render(path, template_values))
-
 
 application = webapp.WSGIApplication(
                                      [('/([^/]+)', UserPage),],

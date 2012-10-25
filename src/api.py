@@ -72,6 +72,7 @@ class saveWithSingleAPI(webapp.RequestHandler):
             rank = self.request.get('rank')
             
             color_name = ColorName().all()\
+                            .filter('user_prefs =', user_prefs)\
                             .filter('name =', name)\
                             .filter('name_yomi =', name_yomi)\
                             .filter('red =', int(red))\
@@ -114,7 +115,10 @@ class saveWithMultipleAPI(webapp.RequestHandler):
             if raw_data != '':
                 json_data = simplejson.loads(raw_data)
                 
-                color_name_list = ColorName().all().fetch(100, 0)
+                color_name_list = ColorName().all()\
+                                    .filter('user_prefs =', user_prefs)\
+                                    .fetch(100, 0)
+                                    
                 for color_name in color_name_list:
                     color_name.delete()
                 
@@ -127,6 +131,7 @@ class saveWithMultipleAPI(webapp.RequestHandler):
                     rank = data['rank']
                 
                     color_name = ColorName().all()\
+                                    .filter('user_prefs =', user_prefs)\
                                     .filter('name =', name)\
                                     .filter('name_yomi =', name_yomi)\
                                     .filter('red =', red)\
@@ -146,9 +151,10 @@ class saveWithMultipleAPI(webapp.RequestHandler):
                     color_name.rank = int(rank)
                     color_name.put()
     
-            json = simplejson.dumps({'state': 'ok'}, ensure_ascii=False)
+            json = simplejson.dumps({'state': 'ok', 'user_id': user_prefs.user_id}, ensure_ascii=False)
             
         else:
+            self.response.set_status(401)
             json = simplejson.dumps({'state': 'failed'}, ensure_ascii=False)
             
         self.response.content_type = 'application/json'

@@ -17,6 +17,11 @@ handlers:
   login: required
   secure: always
   script: api.py
+  
+- url: /api/v1/save_test
+  login: required
+  secure: always
+  script: api.py
 
 - url: /api/.*
   script: api.py
