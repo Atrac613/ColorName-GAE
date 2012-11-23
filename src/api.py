@@ -4,21 +4,26 @@ import os
 import logging
 import datetime
 
-from google.appengine.ext import webapp
+import webapp2
 from google.appengine.ext.webapp.util import run_wsgi_app
 from google.appengine.ext.webapp import template
 from google.appengine.api import urlfetch
 from google.appengine.api import users
 from google.appengine.api import mail
+from google.appengine.api import images
+from google.appengine.ext import db
+from google.appengine.api import taskqueue
+from google.appengine.api import memcache
 
-from django.utils import simplejson 
+import json
 
 from common import gen_userid
 
 from db import ColorName
 from db import UserPrefs
+from db import CrayonData
 
-class loginAPI(webapp.RequestHandler):
+class loginAPI(webapp2.RequestHandler):
     def get(self):
         user = users.get_current_user()
         
@@ -40,7 +45,7 @@ class loginAPI(webapp.RequestHandler):
         path = os.path.join(os.path.dirname(__file__), 'templates/api/login.html')
         self.response.out.write(template.render(path, template_values))
 
-class logoutAPI(webapp.RequestHandler):
+class logoutAPI(webapp2.RequestHandler):
     def get(self):
         successful = self.request.get('successful')
         
@@ -54,7 +59,7 @@ class logoutAPI(webapp.RequestHandler):
         path = os.path.join(os.path.dirname(__file__), 'templates/api/logout.html')
         self.response.out.write(template.render(path, template_values))
 
-class saveWithSingleAPI(webapp.RequestHandler):
+class saveWithSingleAPI(webapp2.RequestHandler):
     def post(self):
         user = users.get_current_user()
         
@@ -91,16 +96,18 @@ class saveWithSingleAPI(webapp.RequestHandler):
             
             color_name.rank = int(rank)
             color_name.put()
+            
+            taskqueue.add(url='/task/create_crayon', params={'id': color_name.key().id()})
     
-            json = simplejson.dumps({'state': 'ok'}, ensure_ascii=False)
+            data = json.dumps({'state': 'ok'}, ensure_ascii=False)
             
         else:
-            json = simplejson.dumps({'state': 'failed'}, ensure_ascii=False)
+            data = json.dumps({'state': 'failed'}, ensure_ascii=False)
             
         self.response.content_type = 'application/json'
-        self.response.out.write(json)
+        self.response.out.write(data)
         
-class saveWithMultipleAPI(webapp.RequestHandler):
+class saveWithMultipleAPI(webapp2.RequestHandler):
     def post(self):
         user = users.get_current_user()
         
@@ -113,14 +120,28 @@ class saveWithMultipleAPI(webapp.RequestHandler):
             raw_data = self.request.get('raw_data')
             
             if raw_data != '':
-                json_data = simplejson.loads(raw_data)
+                json_data = json.loads(raw_data)
                 
-                color_name_list = ColorName().all()\
+                saved_color_name_list = ColorName().all()\
                                     .filter('user_prefs =', user_prefs)\
                                     .fetch(100, 0)
                                     
-                for color_name in color_name_list:
-                    color_name.delete()
+                for saved_color_name in saved_color_name_list:
+                    is_saved = False
+                    for data in json_data:
+                        if data['name'] == saved_color_name.name and \
+                            data['red'] == saved_color_name.red and \
+                            data['green'] == saved_color_name.green and \
+                            data['blue'] == saved_color_name.blue:
+                            
+                            is_saved = True
+                            continue
+                        
+                    if is_saved == False:
+                        logging.info('delete.')
+                        saved_color_name.delete()
+                    else:
+                        logging.info('not delete.')
                 
                 for data in json_data:
                     name = data['name']
@@ -139,6 +160,7 @@ class saveWithMultipleAPI(webapp.RequestHandler):
                                     .filter('blue =', blue)\
                                     .get()
                                     
+                    do_create_crayon = False
                     if color_name is None:
                         color_name = ColorName()
                         color_name.user_prefs = user_prefs
@@ -147,20 +169,25 @@ class saveWithMultipleAPI(webapp.RequestHandler):
                         color_name.red = int(red)
                         color_name.green = int(green)
                         color_name.blue = int(blue)
+                        
+                        do_create_crayon = True
                     
                     color_name.rank = int(rank)
                     color_name.put()
+                    
+                    if do_create_crayon:
+                        taskqueue.add(url='/task/create_crayon', params={'id': color_name.key().id()})
     
-            json = simplejson.dumps({'state': 'ok', 'user_id': user_prefs.user_id}, ensure_ascii=False)
+            data = json.dumps({'state': 'ok', 'user_id': user_prefs.user_id}, ensure_ascii=False)
             
         else:
             self.response.set_status(401)
-            json = simplejson.dumps({'state': 'failed'}, ensure_ascii=False)
+            data = json.dumps({'state': 'failed'}, ensure_ascii=False)
             
         self.response.content_type = 'application/json'
-        self.response.out.write(json)
+        self.response.out.write(data)
         
-class saveTestPage(webapp.RequestHandler):
+class saveTestPage(webapp2.RequestHandler):
     def get(self):
         
         data = []
@@ -183,7 +210,7 @@ class saveTestPage(webapp.RequestHandler):
                      'blue': 70,
                      'rank': 20})
         
-        json_data = simplejson.dumps(data)
+        json_data = json.dumps(data)
         
         template_values = {
             'json_data': json_data
@@ -192,17 +219,102 @@ class saveTestPage(webapp.RequestHandler):
         path = os.path.join(os.path.dirname(__file__), 'templates/api/save.html')
         self.response.out.write(template.render(path, template_values))
 
-
-application = webapp.WSGIApplication(
-                                     [('/api/v1/login', loginAPI),
+class showCrayonAPI(webapp2.RequestHandler):
+    def get(self):
+        id = self.request.get('id')
+        
+        cache_key = 'cached_image_%s' % id
+        
+        image = memcache.get(cache_key)
+        if image is None:
+            color_name = ColorName.get_by_id(int(id))
+            if color_name is None:
+                return self.error(404)
+            
+            crayon_data = CrayonData.all().filter('color_name =', color_name).get()
+            if crayon_data is None:
+                return self.error(404)
+            
+            image = crayon_data.image
+            
+            memcache.add(cache_key, image, 3600)
+            
+            logging.info('create cache.')
+        else:
+            logging.info('load cache.')
+            
+        self.response.headers['Content-Type'] = 'image/png'
+        self.response.out.write(image)
+        
+class showAvatarAPI(webapp2.RequestHandler):
+    def get(self):
+        id = self.request.get('id')
+        
+        cache_key = 'cached_avatar_image_%s' % id
+        
+        image = memcache.get(cache_key)
+        if image is None:
+            user_prefs = UserPrefs.all().filter('user_id =', id).get()
+            if user_prefs is None:
+                return self.error(404)
+            
+            image = user_prefs.avatar
+            
+            memcache.add(cache_key, image, 3600)
+            
+            logging.info('create cache.')
+        else:
+            logging.info('load cache.')
+            
+        self.response.headers['Content-Type'] = 'image/png'
+        self.response.out.write(image)
+        
+class updateProfileAPI(webapp2.RequestHandler):
+    def post(self):
+        user = users.get_current_user()
+        
+        user_prefs_query = UserPrefs().all()
+        user_prefs_query.filter('google_account =', user)
+        
+        user_prefs = user_prefs_query.get()
+        
+        if user is not None and user_prefs is not None:
+            nick_name = self.request.get('nick_name')
+            user_id = self.request.get('user_id')
+            avatar = self.request.get('avatar')
+            
+            is_id_available = True
+            id_check = UserPrefs.all().filter('user_id =', user_id).get()
+            if id_check is not None:
+                if id_check.google_account != user:
+                    is_id_available = False
+                    
+            avatar_result = images.resize(db.Blob(avatar), 300, 300, output_encoding=images.PNG)
+                    
+            if is_id_available:
+                user_prefs.user_id = user_id
+                user_prefs.nick_name = nick_name
+                user_prefs.avatar = db.Blob(avatar_result)
+                user_prefs.put()
+                
+                data = json.dumps({'state': 'ok', 'user_id': user_prefs.user_id}, ensure_ascii=False)
+            
+            else:
+                self.response.set_status(401)
+                data = json.dumps({'state': 'nick name is not available.'}, ensure_ascii=False)
+            
+        else:
+            self.response.set_status(401)
+            data = json.dumps({'state': 'failed'}, ensure_ascii=False)
+            
+        self.response.content_type = 'application/json'
+        self.response.out.write(data)
+        
+app = webapp2.WSGIApplication([('/api/v1/login', loginAPI),
                                       ('/api/v1/logout', logoutAPI),
                                       ('/api/v1/save_with_single', saveWithSingleAPI),
                                       ('/api/v1/save_with_multiple', saveWithMultipleAPI),
-                                      ('/api/v1/save_test', saveTestPage)],
-                                     debug=True)
-
-def main():
-    run_wsgi_app(application)
-
-if __name__ == "__main__":
-    main()
+                                      ('/api/v1/show_crayon', showCrayonAPI),
+                                      ('/api/v1/show_avatar', showAvatarAPI),
+                                      ('/api/v1/update_profile', updateProfileAPI),
+                                      ('/api/v1/save_test', saveTestPage)])
