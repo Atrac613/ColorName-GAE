@@ -40,6 +40,7 @@ class loginAPI(webapp2.RequestHandler):
         
         template_name = 'login.html'
         
+        is_data_available = False
         user_prefs = user_prefs_query.get()
         if user_prefs is None:
             user_prefs = UserPrefs()
@@ -48,13 +49,18 @@ class loginAPI(webapp2.RequestHandler):
             user_prefs.put()
             
         else:
+            color_name = ColorName.all().filter('user_prefs =', user_prefs).count(10)
+            if color_name > 0:
+                is_data_available = True
+                
             if continue_login != 'true' and first_login != 'true':
                 template_name = 'confirm_login.html'
         
         template_values = {
             'account': user.email(),
             'user_id': user_prefs.user_id,
-            'avatar_available': True if user_prefs.avatar else False
+            'avatar_available': True if user_prefs.avatar else False,
+            'data_available': is_data_available
         }
         
         path = os.path.join(os.path.dirname(__file__), 'templates/api/%s' % template_name)
@@ -163,6 +169,8 @@ class saveWithMultipleAPI(webapp2.RequestHandler):
                     else:
                         logging.info('not delete.')
                 
+                new_color_name_list = []
+                
                 for data in json_data:
                     name = data['name']
                     name_yomi = data['name_yomi']
@@ -190,6 +198,12 @@ class saveWithMultipleAPI(webapp2.RequestHandler):
                         color_name.green = int(green)
                         color_name.blue = int(blue)
                         
+                        new_color_name_list.append({'name': color_name.name,
+                                   'name_yomi': color_name.name_yomi,
+                                   'red': color_name.red,
+                                   'green': color_name.green,
+                                   'blue': color_name.blue})
+                        
                         do_create_crayon = True
                     
                     color_name.rank = int(rank)
@@ -198,7 +212,9 @@ class saveWithMultipleAPI(webapp2.RequestHandler):
                     if do_create_crayon:
                         taskqueue.add(url='/task/create_crayon', params={'id': color_name.key().id()})
     
-            data = json.dumps({'state': 'ok', 'user_id': user_prefs.user_id}, ensure_ascii=False)
+            data = json.dumps({'state': 'ok',
+                               'user_id': user_prefs.user_id,
+                               'new': new_color_name_list}, ensure_ascii=False)
             
         else:
             self.response.set_status(401)
@@ -330,10 +346,40 @@ class updateProfileAPI(webapp2.RequestHandler):
         self.response.content_type = 'application/json'
         self.response.out.write(data)
         
+class getFavoriteColorAPI(webapp2.RequestHandler):
+    def get(self):
+        user = users.get_current_user()
+        
+        user_prefs_query = UserPrefs().all()
+        user_prefs_query.filter('google_account =', user)
+        
+        user_prefs = user_prefs_query.get()
+        
+        if user is not None and user_prefs is not None:
+            color_name_list = ColorName.all().filter('user_prefs =', user_prefs).fetch(100)
+            color_list = []
+            for color_name in color_name_list:
+                color_list.append({'name': color_name.name,
+                                   'name_yomi': color_name.name_yomi,
+                                   'red': color_name.red,
+                                   'green': color_name.green,
+                                   'blue': color_name.blue,
+                                   'rank': color_name.rank})
+                
+            data = json.dumps(color_list, ensure_ascii=False)
+            
+        else:
+            self.response.set_status(401)
+            data = json.dumps({'state': 'failed'}, ensure_ascii=False)
+            
+        self.response.content_type = 'application/json'
+        self.response.out.write(data)
+        
 app = webapp2.WSGIApplication([('/api/v1/login', loginAPI),
                                       ('/api/v1/logout', logoutAPI),
                                       ('/api/v1/save_with_single', saveWithSingleAPI),
                                       ('/api/v1/save_with_multiple', saveWithMultipleAPI),
+                                      ('/api/v1/get_favorite_color', getFavoriteColorAPI),
                                       ('/api/v1/show_crayon', showCrayonAPI),
                                       ('/api/v1/show_avatar', showAvatarAPI),
                                       ('/api/v1/update_profile', updateProfileAPI),

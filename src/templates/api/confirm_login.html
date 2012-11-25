@@ -12,8 +12,8 @@
 			height = $(window).height();
 		}
 	 
-		$('#wrapper').height(height - ($('#login_box').height()/2)); 
-		$('#wrapper').css('padding-top', (height/2) - $('#login_box').height());
+		$('#wrapper').height(height); 
+		$('#login_box').css('padding-top', (height/2) - 100);
 	});
 	</script>
 	
@@ -25,10 +25,10 @@
 </head>
 <body style="background-image:url('/images/bg1.png');">
 <div id="wrapper" style="width:320px;margin: 0 auto;text-align:center;background-color:rgba(255,255,255,0.8);">
-	<div id="login_box" style="font-family: 'Ribeye', cursive;">
+	<div id="login_box" style="width:320px;height:200px;font-family: 'Ribeye', cursive;">
 		<p>Login as</p>
 		{% if avatar_available %}
-			<p style="margin-top:5px;margin-bottom:5px;"><img src="/api/v1/show_avatar?id={{ user_id }}" width="50"/></p>
+			<p style="margin-top:5px;margin-bottom:5px;"><img src="/api/v1/show_avatar?id={{ user_id }}" height="50"/></p>
 		{% endif %}
 		<p>{{ account }}</p>
 		<p style="margin-bottom:15px;"><a href="/api/v1/login?continue=true">Continue</a></p>
