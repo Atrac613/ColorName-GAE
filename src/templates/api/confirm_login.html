@@ -1,0 +1,42 @@
+<html>
+<head>
+	<meta name="viewport" content="width=device-width, minimum-scale=1, maximum-scale=1">
+	<link href='http://fonts.googleapis.com/css?family=Ribeye' rel='stylesheet' type='text/css'>
+	<link href="/css/reset.css" media="screen" rel="stylesheet" type="text/css" />
+	<script src="http://code.jquery.com/jquery-1.8.2.min.js" type="text/javascript"></script>
+
+	<script type="text/javascript">
+	$(function(){
+		var height = $('#wrapper').height();
+		if(height < $(window).height()){
+			height = $(window).height();
+		}
+	 
+		$('#wrapper').height(height - ($('#login_box').height()/2)); 
+		$('#wrapper').css('padding-top', (height/2) - $('#login_box').height());
+	});
+	</script>
+	
+	<style type="text/css">
+		a {
+			color:#722f10;
+		}
+	</style>
+</head>
+<body style="background-image:url('/images/bg1.png');">
+<div id="wrapper" style="width:320px;margin: 0 auto;text-align:center;background-color:rgba(255,255,255,0.8);">
+	<div id="login_box" style="font-family: 'Ribeye', cursive;">
+		<p>Login as</p>
+		{% if avatar_available %}
+			<p style="margin-top:5px;margin-bottom:5px;"><img src="/api/v1/show_avatar?id={{ user_id }}" width="50"/></p>
+		{% endif %}
+		<p>{{ account }}</p>
+		<p style="margin-bottom:15px;"><a href="/api/v1/login?continue=true">Continue</a></p>
+		
+		<hr />
+		
+		<p><a href="/api/v1/logout?continue=true">Login as another user</a></p>
+	</div>
+</div>
+</body>
+</html>

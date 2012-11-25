@@ -26,11 +26,19 @@ from db import CrayonData
 class loginAPI(webapp2.RequestHandler):
     def get(self):
         user = users.get_current_user()
+        if user is None:
+            login_url = users.create_login_url('/api/v1/login?first=true')
+            return self.redirect(login_url)
+        
+        continue_login = self.request.get('continue')
+        first_login = self.request.get('first')
         
         user_id = gen_userid()
         
         user_prefs_query = UserPrefs().all()
         user_prefs_query.filter('google_account =', user)
+        
+        template_name = 'login.html'
         
         user_prefs = user_prefs_query.get()
         if user_prefs is None:
@@ -38,16 +46,28 @@ class loginAPI(webapp2.RequestHandler):
             user_prefs.user_id = user_id
             user_prefs.google_account = user
             user_prefs.put()
+            
+        else:
+            if continue_login != 'true' and first_login != 'true':
+                template_name = 'confirm_login.html'
         
         template_values = {
+            'account': user.email(),
+            'user_id': user_prefs.user_id,
+            'avatar_available': True if user_prefs.avatar else False
         }
         
-        path = os.path.join(os.path.dirname(__file__), 'templates/api/login.html')
+        path = os.path.join(os.path.dirname(__file__), 'templates/api/%s' % template_name)
         self.response.out.write(template.render(path, template_values))
 
 class logoutAPI(webapp2.RequestHandler):
     def get(self):
         successful = self.request.get('successful')
+        continue_login = self.request.get('continue')
+        
+        if continue_login == 'true':
+            logout_url = users.create_logout_url('/api/v1/login')
+            return self.redirect(logout_url)
         
         if successful != 'true':
             logout_url = users.create_logout_url('/api/v1/logout?successful=true')
