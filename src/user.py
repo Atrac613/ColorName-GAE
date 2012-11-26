@@ -36,10 +36,16 @@ class UserPage(webapp2.RequestHandler):
         #                   })
         for color_name in color_name_list:
             is_crayon_available = CrayonData.all().filter('color_name =', color_name).get()
+            
+            show_new_icon = False
+            if color_name.created_at > (datetime.datetime.now() - datetime.timedelta(days=1)):
+                show_new_icon = True
+            
             color_list.append({'id': color_name.key().id(),
                                'name': color_name.name,
                                'name_yomi': color_name.name_yomi,
                                'is_crayon_available': True if is_crayon_available else False,
+                               'show_new_icon': show_new_icon,
                                'hex': '%02x%02x%02x' % (color_name.red,
                                                          color_name.green,
                                                          color_name.blue)
@@ -56,4 +62,4 @@ class UserPage(webapp2.RequestHandler):
         self.response.out.write(template.render(path, template_values))
 
 app = webapp2.WSGIApplication(
-                                     [('/([^/]+)', UserPage),])
+                                     [('/u/([^/]+)', UserPage),])

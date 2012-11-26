@@ -1,1 +1,56 @@
-hello.
+<html>
+<head>
+	<meta name="viewport" content="width=device-width, minimum-scale=1, maximum-scale=1">
+	<link href='http://fonts.googleapis.com/css?family=Ribeye' rel='stylesheet' type='text/css'>
+	<link href="/css/reset.css" media="screen" rel="stylesheet" type="text/css" />
+	<script src="http://code.jquery.com/jquery-1.8.2.min.js" type="text/javascript"></script>
+
+	<script type="text/javascript">
+	$(function(){
+	  var height = $('#wrapper').height();
+	  if(height < $(window).height()){
+	    height = $(window).height();
+	
+	  }
+	 
+	   $('#wrapper').height(height);
+	   $('#logo').css('padding-top', (height/2) - 70);
+	});
+	</script>
+
+	<script type="text/javascript">
+	
+	  var _gaq = _gaq || [];
+	  _gaq.push(['_setAccount', 'UA-1167116-23']);
+	  _gaq.push(['_trackPageview']);
+	
+	  (function() {
+	    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+	    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+	    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+	  })();
+	
+	</script>
+	
+	<meta name="description" content="Find color name." />
+	
+	<meta property="og:title" content="ColorName"/>
+	<meta property="og:type" content="product"/>
+	<meta property="og:url" content="http://color-name.atrac613.io"/>
+	<meta property="og:image" content="http://color-name.atrac613.io/images/app_icon.png"/>
+
+	<title>ColorName</title>
+</head>
+<body style="background-image:url('/images/bg1.png');">
+
+<div id="wrapper" style="width:320px;margin: 0 auto;text-align:center;color:white;">
+	
+	<div id="logo" style="width:auto;height:120px;">
+		<p><img src="/images/app_icon.png" width="100px" style="border-radius: 15px;" /></p>
+		<p style="font-family: 'Ribeye', cursive;padding:10px 0;">ColorName</p>
+	</div>
+
+</div>
+
+</body>
+</html>

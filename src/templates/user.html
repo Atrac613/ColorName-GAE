@@ -16,7 +16,29 @@
 	   $('#wrapper').height(height); 
 	});
 	</script>
+	
+	<script type="text/javascript">
 
+	  var _gaq = _gaq || [];
+	  _gaq.push(['_setAccount', 'UA-1167116-23']);
+	  _gaq.push(['_trackPageview']);
+	
+	  (function() {
+	    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+	    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+	    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+	  })();
+	
+	</script>
+	
+	<meta name="description" content="Find color name." />
+	
+	<meta property="og:title" content="ColorName"/>
+	<meta property="og:type" content="product"/>
+	<meta property="og:url" content="http://color-name.atrac613.io"/>
+	<meta property="og:image" content="http://color-name.atrac613.io/images/app_icon.png"/>
+
+	<title>{{ nick_name }} | ColorName</title>
 </head>
 <body style="background-image:url('/images/bg1.png');">
 
@@ -27,9 +49,11 @@
 	{% for color in color_list %}
 		<tr>
 		{% if color.is_crayon_available %}
-			<td align="center" height="110px"><img width="280" src="/api/v1/show_crayon?id={{ color.id }}" /><br />{{ color.name }}</td>
+			<td align="center" height="110px"><img width="280" src="/api/v1/show_crayon?id={{ color.id }}" /><p>{{ color.name }}{% if color.name_yomi %} ({{ color.name_yomi }}){% endif %}</p>
+				{% if color.show_new_icon %}<div style="width:48px;height:48px;position:relative;right:-95px;top:-60px;margin-top:-48px;"><img src="/images/splash_new_rose.png" width="48" /></div>{% endif %}
+			</td>
 		{% else %}
-			<td align="center" height="110px"><img width="280" src="/images/crayon_pending.png" /><br />{{ color.name }}</td>
+			<td align="center" height="110px"><img width="280" src="/images/crayon_pending.png" /><br />{{ color.name }}{% if color.name_yomi %} ({{ color.name_yomi }}){% endif %}</td>
 		{% endif %}
 		</tr>
 	{% endfor %}
@@ -50,14 +74,17 @@
 	
 	{% endif %}
 
-	<div style="clear:both;width:320px;height:200px;text-align:center;background-color:rgba(255,255,255, 0.7);margin: 10px auto;padding-top:10px;padding-bottom:10px;">
+	<div style="clear:both;width:320px;height:145px;text-align:center;background-color:rgba(255,255,255, 0.7);margin: 10px auto;padding-top:10px;padding-bottom:10px;">
 		<img src="/images/app_icon.png" width="100px" style="border-radius: 15px;" />
-		<p style="font-family: 'Ribeye', cursive;">Color Name</p>
+		<p style="font-family: 'Ribeye', cursive;">ColorName</p>
+		<p style="font-family: 'Ribeye', cursive;">Coming Soon To The App Store.</p>
+		<!--
 		<p style="font-family: 'Ribeye', cursive;line-height: 25px;">Dwonload the Free iPhone App</p>
 		<img src="/images/app_store.png" width="150px" />
+		-->
 	</div>
 
-	<p style="padding:10px 0;">(C) ATRAC613.IO</p>
+	<p style="font-family: 'Ribeye', cursive;padding:10px 0;">(C) ATRAC613.IO</p>
 
 </div>
 

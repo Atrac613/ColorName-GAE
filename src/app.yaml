@@ -35,8 +35,8 @@ handlers:
   login: admin
   script: task.app
 
-- url: /
-  script: main.app
+- url: /u/.*
+  script: user.app
   
 - url: /.*
-  script: user.app
+  script: main.app
