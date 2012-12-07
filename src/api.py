@@ -40,7 +40,7 @@ class loginAPI(webapp2.RequestHandler):
         
         template_name = 'login.html'
         
-        is_data_available = False
+        is_previously_saved = False
         user_prefs = user_prefs_query.get()
         if user_prefs is None:
             user_prefs = UserPrefs()
@@ -51,7 +51,7 @@ class loginAPI(webapp2.RequestHandler):
         else:
             color_name = ColorName.all().filter('user_prefs =', user_prefs).count(10)
             if color_name > 0:
-                is_data_available = True
+                is_previously_saved = True
                 
             if continue_login != 'true' and first_login != 'true':
                 template_name = 'confirm_login.html'
@@ -60,7 +60,7 @@ class loginAPI(webapp2.RequestHandler):
             'account': user.email(),
             'user_id': user_prefs.user_id,
             'avatar_available': True if user_prefs.avatar else False,
-            'data_available': is_data_available
+            'is_previously_saved': is_previously_saved
         }
         
         path = os.path.join(os.path.dirname(__file__), 'templates/api/%s' % template_name)
@@ -214,7 +214,7 @@ class saveWithMultipleAPI(webapp2.RequestHandler):
     
             data = json.dumps({'state': 'ok',
                                'user_id': user_prefs.user_id,
-                               'new': new_color_name_list}, ensure_ascii=False)
+                               'new_color': new_color_name_list}, ensure_ascii=False)
             
         else:
             self.response.set_status(401)
