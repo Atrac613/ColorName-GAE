@@ -336,10 +336,14 @@ class updateProfileAPI(webapp2.RequestHandler):
                 data = json.dumps({'state': 'ok', 'user_id': user_prefs.user_id}, ensure_ascii=False)
             
             else:
+                logging.info('nick name is not available.')
+                
                 self.response.set_status(401)
                 data = json.dumps({'state': 'nick name is not available.'}, ensure_ascii=False)
             
         else:
+            logging.info('unauthorized.')
+            
             self.response.set_status(401)
             data = json.dumps({'state': 'failed'}, ensure_ascii=False)
             
